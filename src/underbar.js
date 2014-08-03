@@ -279,8 +279,8 @@ var _ = {};
     return function() {
       if (!alreadyCalled) {
         // TIP: .apply(this, arguments) is the standard way to pass on all of the
-        // infromation from one function call to another.
-        result = func.apply(this, arguments);
+        // information from one function call to another.
+        result = func.apply(null, arguments);
         alreadyCalled = true;
       }
       // The new function always returns the originally computed result.
@@ -295,6 +295,13 @@ var _ = {};
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    var ledger = {};
+    return function(arg){
+      if (ledger[arg] === undefined){
+        ledger[arg] = func(arg);
+      }
+      return ledger[arg];
+    };
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -304,6 +311,10 @@ var _ = {};
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    var args = Array.prototype.slice.call(arguments, 2);
+    return setTimeout(function(){
+      return func.apply(null, args);
+    }, wait);
   };
 
 
@@ -318,6 +329,16 @@ var _ = {};
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var shuffled = array.slice();
+    var t;
+    var r;
+    for (var i = shuffled.length - 1; i >= 0; i--){
+      r = Math.floor(Math.random() * (i+1));
+      t = shuffled[r];
+      shuffled[r] = shuffled[i];
+      shuffled[i] = t;
+    }
+    return shuffled;
   };
 
 
