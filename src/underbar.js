@@ -353,6 +353,25 @@ var _ = {};
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
+    return collection.sort(function(a, b){
+      if (typeof iterator === 'string'){
+        if (a[iterator] < b[iterator]){
+          return -1;
+        } else if (a[iterator] > b[iterator]){
+          return 1;
+        } else {
+          return 0;
+        }
+      } else {
+        if (iterator(a) < iterator(b)){
+          return -1;
+        } else if (iterator(a) > iterator(b)){
+          return 1;
+        } else {
+          return 0;
+        }
+      }
+    });
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -361,6 +380,21 @@ var _ = {};
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
+    var out = [];
+    var maxLength = _.reduce(arguments, function(memo, item){
+      if (item.length > memo){
+        return item.length;
+      } else {
+        return memo;
+      }
+    }, 0);
+    for (var i = 0; i < maxLength; i++){
+      out[i] = [];
+      for (var arg = 0; arg < arguments.length; arg++){
+        out[i][arg] = arguments[arg][i];
+      }
+    }
+    return out;
   };
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
@@ -368,16 +402,49 @@ var _ = {};
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
+    if (result === undefined){
+      result = [];
+    }
+    _.each(nestedArray, function(item){
+      if (Array.isArray(item)){
+        _.flatten(item, result);
+      } else {
+        result.push(item);
+      }
+    });
+    return result;
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
   _.intersection = function() {
+    var args = Array.prototype.slice.call(arguments);
+    var a = args.slice(0,1)[0];
+    var b = args.slice(1)[0];
+    if (Array.isArray(b[0])){
+      b = _.intersection.apply(null, b);
+    } else {
+      a = _.filter(a, function(itemA){
+        return _.some(b, function(itemB){
+          return itemB == itemA;
+        })
+      });
+      return a;
+    }
   };
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
+    var args = Array.prototype.slice.call(arguments,1);
+    for (var i = 0; i < args.length; i++){
+      array = _.filter(array, function(item){
+        return !_.some(args[i], function(argItem){
+          return argItem === item;
+        });
+      });
+    }
+    return array;
   };
 
 
@@ -391,6 +458,35 @@ var _ = {};
   //
   // See the Underbar readme for details.
   _.throttle = function(func, wait) {
+    var lastRun;
+    var lastResult;
+    var scheduled = false;
+    var promise;
+    return function(){
+      var now = Date.now();
+      if (now < lastRun + wait){
+        if (scheduled){
+          console.log('Already promised');
+        } else {
+          promise = new Promise(function(resolve) {
+            console.log('Promised to run in ' + ((lastRun + wait) - now) + 'ms');
+            setTimeout(function() {
+              scheduled = false;
+              lastRun = Date.now();
+              resolve(func());
+            }, (lastRun + wait) - now);
+          });
+          scheduled = true;
+          promise.then(function(result) {
+            lastResult = result;
+          });
+        }
+      } else {
+        lastRun = Date.now();
+        lastResult = func();
+      }
+      return lastResult;
+    }
   };
 
 }).call(this);
