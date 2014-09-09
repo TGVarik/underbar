@@ -399,6 +399,34 @@ var _ = {};
   //
   // See the Underbar readme for details.
   _.throttle = function(func, wait) {
+
+    var timestamp = 0;
+    var result;
+    var scheduled = false;
+
+
+    return function() {
+
+      var dothestuff = function() {
+        timestamp = Date.now();
+        console.log("new timestamp:", timestamp);
+        result = func();
+        scheduled=false;
+      }
+
+      if(!scheduled) {
+        if(Date.now() >= (timestamp + wait)) {
+          console.log("the if happened");
+          dothestuff();
+        }
+        else {
+          console.log("the else happened");
+          setTimeout(dothestuff, (timestamp + wait) - Date.now());
+          scheduled = true;
+        }
+      }
+      return result;
+    }
   };
 
 }).call(this);
