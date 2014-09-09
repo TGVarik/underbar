@@ -46,6 +46,17 @@ var _ = {};
   // Note: _.each does not have a return value, but rather simply runs the
   // iterator function over each item in the input collection.
   _.each = function(collection, iterator) {
+
+    if (Array.isArray(collection)) {
+      for (var i=0; i<collection.length; i++) {
+        iterator(collection[i], i, collection);
+      }
+    }
+    else {
+      for (var key in collection) {
+        iterator(collection[key], key, collection);
+      }
+    }
   };
 
   // Returns the index at which value can be found in the array, or -1 if value
@@ -82,9 +93,12 @@ var _ = {};
 
   // Return the results of applying an iterator to each element.
   _.map = function(collection, iterator) {
-    // map() is a useful primitive iteration function that works a lot
-    // like each(), but in addition to running the operation on all
-    // the members, it also maintains an array of results.
+    var result = [];
+
+    _.each(collection, function(value) { result.push(iterator(value))});
+
+      return result;
+
   };
 
   /*
@@ -253,6 +267,16 @@ var _ = {};
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
+    if (typeof iterator === 'string'){
+      collection.sort(function(a, b){
+        return a[iterator] - b[iterator];
+      });
+    } else {
+      collection.sort(function(a, b){
+        return iterator(a) - iterator(b);
+      });
+    }
+    return collection;
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -261,6 +285,21 @@ var _ = {};
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
+
+    var results= [];
+    var args = Array.prototype.slice.apply(arguments);
+
+    var lengths = _.map(args, function(arr) {return arr.length;});
+    var longest = Math.max.apply(null, lengths); //NBD
+
+    for (var i=0; i<longest; i++) {
+      var subarr = [];
+      for (var j=0; j<args.length; j++) {
+        subarr.push(args[j][i]);
+      }
+      results.push(subarr);
+    }
+    return results;
   };
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
@@ -268,11 +307,36 @@ var _ = {};
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
+
+    if (result === undefined) {
+      result = [];
+    }
+
+    for (var i=0; i<nestedArray.length; i++) {
+      if(Array.isArray(nestedArray[i])) {
+        result = _.flatten(nestedArray[i], result);
+      }
+      else {
+        result.push(nestedArray[i]);
+      }
+    }
+
+    return result;
+
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
   _.intersection = function() {
+//WORK HERE
+    var args = Array.prototype.slice.call(arguments);
+
+    for (var i=0; i<args.length; i++) {
+
+    _.filter(args[i], function(item) {
+      args[i+1].indexOf(item)}
+
+
   };
 
   // Take the difference between one array and a number of other arrays.
