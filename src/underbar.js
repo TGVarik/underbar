@@ -78,6 +78,13 @@ var _ = {};
 
   // Return all elements of an array that pass a truth test.
   _.filter = function(collection, test) {
+    var result = [];
+    _.each(collection, function(element){
+      if (test(element)){
+        result.push(element);
+      }
+    });
+    return result;
   };
 
   // Return all elements of an array that don't pass a truth test.
@@ -88,6 +95,15 @@ var _ = {};
 
   // Produce a duplicate-free version of the array.
   _.uniq = function(array) {
+
+    var results = [];
+    _.each(array, function(element) {
+      if (results.indexOf(element) < 0) {
+        results.push(element);
+      }
+    });
+
+    return results;
   };
 
 
@@ -162,6 +178,9 @@ var _ = {};
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+    return !_.every(collection, function(item){
+      return Boolean((iterator === undefined) ? item : iterator(item)) === false;
+    });
   };
 
 
@@ -328,20 +347,45 @@ var _ = {};
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
   _.intersection = function() {
-//WORK HERE
+
     var args = Array.prototype.slice.call(arguments);
 
-    for (var i=0; i<args.length; i++) {
+    var process = function(next, result){
+      var shortest = result;
+      var other    = next;
+      if (next.length < result.length){
+        shortest = next;
+        other = result;
+      }
+      return _.filter(shortest, function(element){
+        return other.indexOf(element) > -1;
+      });
+    };
 
-    _.filter(args[i], function(item) {
-      args[i+1].indexOf(item)}
+    var result = args[0];
 
+    for (var i=1; i<args.length; i++) {
+      result = process(args[i],result);
+    }
+
+    return result;
 
   };
+
+
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
+
+    var nums = _.uniq(_.flatten(Array.prototype.slice.call(arguments,1)));
+    for (var i=0; i<array.length; i++) {
+      if (nums.indexOf(array[i]) > -1) {
+        array.splice(i,1);
+        i--;
+      }
+    }
+    return array;
   };
 
 
