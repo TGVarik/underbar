@@ -192,6 +192,9 @@ var _ = {};
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+    return !_.every(collection, function(item){
+      return Boolean((iterator === undefined) ? item : iterator(item)) === false;
+    });
   };
 
 
@@ -297,6 +300,16 @@ var _ = {};
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
+    if (typeof iterator === 'string'){
+      collection.sort(function(a, b){
+        return a[iterator] - b[iterator];
+      });
+    } else {
+      collection.sort(function(a, b){
+        return iterator(a) - iterator(b);
+      });
+    }
+    return collection;
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -305,6 +318,21 @@ var _ = {};
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
+
+    var results= [];
+    var args = Array.prototype.slice.apply(arguments);
+
+    var lengths = _.map(args, function(arr) {return arr.length;});
+    var longest = Math.max.apply(null, lengths); //NBD
+
+    for (var i=0; i<longest; i++) {
+      var subarr = [];
+      for (var j=0; j<args.length; j++) {
+        subarr.push(args[j][i]);
+      }
+      results.push(subarr);
+    }
+    return results;
   };
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
@@ -312,16 +340,66 @@ var _ = {};
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
+
+    if (result === undefined) {
+      result = [];
+    }
+
+    for (var i=0; i<nestedArray.length; i++) {
+      if(Array.isArray(nestedArray[i])) {
+        result = _.flatten(nestedArray[i], result);
+      }
+      else {
+        result.push(nestedArray[i]);
+      }
+    }
+
+    return result;
+
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
   _.intersection = function() {
+
+    var args = Array.prototype.slice.call(arguments);
+
+    var process = function(next, result){
+      var shortest = result;
+      var other    = next;
+      if (next.length < result.length){
+        shortest = next;
+        other = result;
+      }
+      return _.filter(shortest, function(element){
+        return other.indexOf(element) > -1;
+      });
+    };
+
+    var result = args[0];
+
+    for (var i=1; i<args.length; i++) {
+      result = process(args[i],result);
+    }
+
+    return result;
+
   };
+
+
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
+
+    var nums = _.uniq(_.flatten(Array.prototype.slice.call(arguments,1)));
+    for (var i=0; i<array.length; i++) {
+      if (nums.indexOf(array[i]) > -1) {
+        array.splice(i,1);
+        i--;
+      }
+    }
+    return array;
   };
 
 
@@ -335,6 +413,34 @@ var _ = {};
   //
   // See the Underbar readme for details.
   _.throttle = function(func, wait) {
+
+    var timestamp = 0;
+    var result;
+    var scheduled = false;
+
+
+    return function() {
+
+      var dothestuff = function() {
+        timestamp = Date.now();
+        console.log("new timestamp:", timestamp);
+        result = func();
+        scheduled=false;
+      }
+
+      if(!scheduled) {
+        if(Date.now() >= (timestamp + wait)) {
+          console.log("the if happened");
+          dothestuff();
+        }
+        else {
+          console.log("the else happened");
+          setTimeout(dothestuff, (timestamp + wait) - Date.now());
+          scheduled = true;
+        }
+      }
+      return result;
+    }
   };
 
 }).call(this);
