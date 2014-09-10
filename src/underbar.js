@@ -168,6 +168,13 @@ var _ = {};
   //     return total + number;
   //   }, 0); // should be 6
   _.reduce = function(collection, iterator, accumulator) {
+    if (accumulator === undefined){
+      accumulator = collection[0];
+    }
+    _.each(collection, function(item){
+      accumulator = iterator(accumulator, item);
+    });
+    return accumulator;
   };
 
   // Determine if the array or object contains a given value (using `===`).
@@ -186,6 +193,9 @@ var _ = {};
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    return _.reduce(collection, function(memo, item){
+      return memo && Boolean((iterator === undefined) ? item : iterator(item));
+    }, true);
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
@@ -205,23 +215,37 @@ var _ = {};
    * In this section, we'll look at a couple of helpers for merging objects.
    */
 
-  // Extend a given object with all the properties of the passed in
-  // object(s).
-  //
-  // Example:
-  //   var obj1 = {key1: "something"};
-  //   _.extend(obj1, {
-  //     key2: "something new",
-  //     key3: "something else new"
-  //   }, {
-  //     bla: "even more stuff"
-  //   }); // obj1 now contains key1, key2, key3 and bla
+    // Extend a given object with all the properties of the passed in
+    // object(s).
+    //
+    // Example:
+    //   var obj1 = {key1: "something"};
+    //   _.extend(obj1, {
+    //     key2: "something new",
+    //     key3: "something else new"
+    //   }, {
+    //     bla: "even more stuff"
+    //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    for (var a = 1; a < arguments.length; a++){
+      for (var key in arguments[a]){
+        obj[key] = arguments[a][key];
+      }
+    }
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    for (var a = 1; a < arguments.length; a++){
+      for (var key in arguments[a]){
+        if (obj[key] === undefined){
+          obj[key] = arguments[a][key];
+        }
+      }
+    }
+    return obj;
   };
 
 
@@ -233,8 +257,8 @@ var _ = {};
    * and return out a new version of the function that works somewhat differently
    */
 
-  // Return a function that can be called at most one time. Subsequent calls
-  // should return the previously returned value.
+    // Return a function that can be called at most one time. Subsequent calls
+    // should return the previously returned value.
   _.once = function(func) {
     // TIP: These variables are stored in a "closure scope" (worth researching),
     // so that they'll remain available to the newly-generated function every
@@ -247,8 +271,8 @@ var _ = {};
     return function() {
       if (!alreadyCalled) {
         // TIP: .apply(this, arguments) is the standard way to pass on all of the
-        // infromation from one function call to another.
-        result = func.apply(this, arguments);
+        // information from one function call to another.
+        result = func.apply(null, arguments);
         alreadyCalled = true;
       }
       // The new function always returns the originally computed result.
@@ -263,6 +287,13 @@ var _ = {};
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    var ledger = {};
+    return function(arg){
+      if (ledger[arg] === undefined){
+        ledger[arg] = func(arg);
+      }
+      return ledger[arg];
+    };
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -272,6 +303,10 @@ var _ = {};
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    var args = Array.prototype.slice.call(arguments, 2);
+    return setTimeout(function(){
+      return func.apply(null, args);
+    }, wait);
   };
 
 
@@ -280,12 +315,22 @@ var _ = {};
    * ==============================
    */
 
-  // Randomizes the order of an array's contents.
-  //
-  // TIP: This function's test suite will ask that you not modify the original
-  // input array. For a tip on how to make a copy of an array, see:
-  // http://mdn.io/Array.prototype.slice
+    // Randomizes the order of an array's contents.
+    //
+    // TIP: This function's test suite will ask that you not modify the original
+    // input array. For a tip on how to make a copy of an array, see:
+    // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var shuffled = array.slice();
+    var t;
+    var r;
+    for (var i = shuffled.length - 1; i >= 0; i--){
+      r = Math.floor(Math.random() * (i+1));
+      t = shuffled[r];
+      shuffled[r] = shuffled[i];
+      shuffled[i] = t;
+    }
+    return shuffled;
   };
 
 
