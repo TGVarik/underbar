@@ -102,18 +102,18 @@ var _ = {};
     // copying code in and modifying it
     return _.filter(collection, function(item){
       return !test(item);
-    })
+    });
   };
 
   // Produce a duplicate-free version of the array.
   _.uniq = function(array) {
-    var result = [];
+    var results = [];
     _.each(array, function(item){
-      if (_.indexOf(result, item) === -1){
-        result.push(item);
+      if (results.indexOf(item) === -1){
+        results.push(item);
       }
     });
-    return result;
+    return results;
   };
 
 
@@ -150,15 +150,14 @@ var _ = {};
   // Calls the method named by functionOrKey on each value in the list.
   // Note: you will need to learn a bit about .apply to complete this.
   _.invoke = function(collection, functionOrKey, args) {
-    var result = [];
-    _.each(collection, function(item){
-      if(item[functionOrKey]){
-        result.push(item[functionOrKey].apply(item, args));
-      } else {
-        result.push(functionOrKey.apply(item, args));
+    return _.map(collection, function(item){
+      var func = functionOrKey;
+      if (typeof functionOrKey === 'string'){
+        func = item[functionOrKey];
       }
+      //args.unshift(item);
+      return func.apply(item, args);
     });
-    return result;
   };
 
   // Reduces an array or object to a single value by repetitively calling
@@ -353,25 +352,16 @@ var _ = {};
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
-    return collection.sort(function(a, b){
-      if (typeof iterator === 'string'){
-        if (a[iterator] < b[iterator]){
-          return -1;
-        } else if (a[iterator] > b[iterator]){
-          return 1;
-        } else {
-          return 0;
-        }
-      } else {
-        if (iterator(a) < iterator(b)){
-          return -1;
-        } else if (iterator(a) > iterator(b)){
-          return 1;
-        } else {
-          return 0;
-        }
-      }
-    });
+    if (typeof iterator === 'string'){
+      collection.sort(function(a, b){
+        return a[iterator] - b[iterator];
+      });
+    } else {
+      collection.sort(function(a, b){
+        return iterator(a) - iterator(b);
+      });
+    }
+    return collection;
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -380,21 +370,21 @@ var _ = {};
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
-    var out = [];
-    var maxLength = _.reduce(arguments, function(memo, item){
-      if (item.length > memo){
-        return item.length;
-      } else {
-        return memo;
+
+    var results= [];
+    var args = Array.prototype.slice.apply(arguments);
+
+    var lengths = _.map(args, function(arr) {return arr.length;});
+    var longest = Math.max.apply(null, lengths); //NBD
+
+    for (var i=0; i<longest; i++) {
+      var subarr = [];
+      for (var j=0; j<args.length; j++) {
+        subarr.push(args[j][i]);
       }
-    }, 0);
-    for (var i = 0; i < maxLength; i++){
-      out[i] = [];
-      for (var arg = 0; arg < arguments.length; arg++){
-        out[i][arg] = arguments[arg][i];
-      }
+      results.push(subarr);
     }
-    return out;
+    return results;
   };
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
@@ -402,17 +392,22 @@ var _ = {};
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
-    if (result === undefined){
+
+    if (result === undefined) {
       result = [];
     }
-    _.each(nestedArray, function(item){
-      if (Array.isArray(item)){
-        _.flatten(item, result);
-      } else {
-        result.push(item);
+
+    for (var i=0; i<nestedArray.length; i++) {
+      if(Array.isArray(nestedArray[i])) {
+        result = _.flatten(nestedArray[i], result);
       }
-    });
+      else {
+        result.push(nestedArray[i]);
+      }
+      }
+
     return result;
+
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
@@ -433,16 +428,18 @@ var _ = {};
     }
   };
 
+
+
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
-    var args = Array.prototype.slice.call(arguments,1);
-    for (var i = 0; i < args.length; i++){
-      array = _.filter(array, function(item){
-        return !_.some(args[i], function(argItem){
-          return argItem === item;
-        });
-      });
+
+    var nums = _.uniq(_.flatten(Array.prototype.slice.call(arguments,1)));
+    for (var i=0; i<array.length; i++) {
+      if (nums.indexOf(array[i]) > -1) {
+        array.splice(i,1);
+        i--;
+      }
     }
     return array;
   };
@@ -488,5 +485,6 @@ var _ = {};
       return lastResult;
     }
   };
+
 
 }).call(this);
